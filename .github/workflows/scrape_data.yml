@@ -2,7 +2,6 @@ name: Scrape NSE Data with Node.js
 
 on:
   schedule:
-    # Runs every 30 minutes
     - cron: '*/30 * * * *'
   workflow_dispatch:
 
@@ -16,7 +15,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18' # Use a stable LTS version
+          node-version: '18'
 
       - name: Install Dependencies
         run: npm install
@@ -26,10 +25,26 @@ jobs:
 
       - name: Scrape Gainers and POST to npoint
         run: |
+          echo "Attempting to scrape top gainers..."
           gainer_data=$(node build/cli/index.js top-gainers)
-          curl -X POST -H "Content-Type: application/json" -d "$gainer_data" ${{ secrets.NPOINT_GAINERS_URL }}
+          echo "--- START OF GAINER DATA ---"
+          echo "$gainer_data"
+          echo "--- END OF GAINER DATA ---"
+          if [[ -n "$gainer_data" ]]; then
+            curl -X POST -H "Content-Type: application/json" -d "$gainer_data" ${{ secrets.NPOINT_GAINERS_URL }}
+          else
+            echo "Scraper returned no data for gainers. Skipping post."
+          fi
 
       - name: Scrape Losers and POST to npoint
         run: |
+          echo "Attempting to scrape top losers..."
           loser_data=$(node build/cli/index.js top-losers)
-          curl -X POST -H "Content-Type: application/json" -d "$loser_data" ${{ secrets.NPOINT_LOSERS_URL }}
+          echo "--- START OF LOSER DATA ---"
+          echo "$loser_data"
+          echo "--- END OF LOSER DATA ---"
+          if [[ -n "$loser_data" ]]; then
+            curl -X POST -H "Content-Type: application/json" -d "$loser_data" ${{ secrets.NPOINT_LOSERS_URL }}
+          else
+            echo "Scraper returned no data for losers. Skipping post."
+          fi
