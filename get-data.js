@@ -1,20 +1,23 @@
-const { NseIndia, NseIndexes } = require('./build/index');
+const { NseIndia } = require('./build/index');
 const nse = new NseIndia();
 
 // This gets the argument ('gainers' or 'losers') from the command line
 const dataType = process.argv[2];
 
-// Use the correct function from the documentation and specify the NIFTY 50 index
-nse.getGainersAndLosersByIndex(NseIndexes.NIFTY_50)
+// Use the correct function from the documentation.
+// Instead of using the NseIndexes enum, we pass the index name as a simple string.
+nse.getGainersAndLosersByIndex("NIFTY 50")
   .then(data => {
     let outputData = [];
-    // The data object directly contains 'gainers' and 'losers' arrays
+
+    // The 'data' object from this function directly contains 'gainers' and 'losers' arrays
     if (dataType === 'gainers' && data.gainers) {
       outputData = data.gainers;
     } else if (dataType === 'losers' && data.losers) {
       outputData = data.losers;
     }
-    // Print the data as a clean JSON string
+
+    // Print the data as a clean JSON string, ready for npoint.io
     console.log(JSON.stringify(outputData, null, 2));
   })
   .catch(error => {
