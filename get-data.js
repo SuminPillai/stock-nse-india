@@ -1,24 +1,23 @@
 const { NseIndia } = require('./build/index');
 const nse = new NseIndia();
-const dataType = process.argv[2]; // This will be 'gainers' or 'losers'
 
-nse.getMarketStatus()
+// This gets the argument ('gainers' or 'losers') from the command line
+const dataType = process.argv[2];
+
+// Use the correct function: getMarketMovers()
+nse.getMarketMovers()
   .then(data => {
-    const marketMovers = data.marketState[0].marketMovers;
-    if (marketMovers && marketMovers.length > 0) {
-      if (dataType === 'gainers') {
-        // Convert the gainers data to a JSON string and print it
-        console.log(JSON.stringify(marketMovers[0].gainers, null, 2));
-      } else if (dataType === 'losers') {
-        // Convert the losers data to a JSON string and print it
-        console.log(JSON.stringify(marketMovers[0].losers, null, 2));
-      }
+    // Check if the correct data type exists in the response
+    if (dataType === 'gainers' && data.gainers) {
+      console.log(JSON.stringify(data.gainers, null, 2));
+    } else if (dataType === 'losers' && data.losers) {
+      console.log(JSON.stringify(data.losers, null, 2));
     } else {
-      console.log("[]"); // Print empty array if no market movers data
+      console.log("[]"); // Print an empty array if no data is found
     }
   })
   .catch(error => {
-    console.error('Failed to fetch market status:', error);
-    console.log("[]"); // Print empty array on error
+    console.error(`Failed to fetch market movers: ${error.message}`);
+    console.log("[]"); // Print an empty array if an error occurs
     process.exit(1);
   });
