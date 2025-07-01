@@ -1,25 +1,35 @@
-name: Scrape And Forward NSE Data
+name: Scrape NSE Data with Node.js
+
 on:
   schedule:
+    # Runs every 30 minutes
     - cron: '*/30 * * * *'
   workflow_dispatch:
+
 jobs:
   scrape-and-post:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          python-version: '3.x'
+          node-version: '18' # Use a stable LTS version
+
       - name: Install Dependencies
-        run: pip install -r requirements.txt
+        run: npm install
+
+      - name: Build the Project
+        run: npm run build
+
       - name: Scrape Gainers and POST to npoint
         run: |
-          gainer_data=$(python3 stock_nse_india.py top_gainers)
+          gainer_data=$(node build/cli/index.js top-gainers)
           curl -X POST -H "Content-Type: application/json" -d "$gainer_data" ${{ secrets.NPOINT_GAINERS_URL }}
+
       - name: Scrape Losers and POST to npoint
         run: |
-          loser_data=$(python3 stock_nse_india.py top_losers)
+          loser_data=$(node build/cli/index.js top-losers)
           curl -X POST -H "Content-Type: application/json" -d "$loser_data" ${{ secrets.NPOINT_LOSERS_URL }}
