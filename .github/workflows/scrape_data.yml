@@ -25,26 +25,12 @@ jobs:
 
       - name: Scrape Gainers and POST to npoint
         run: |
-          echo "Attempting to scrape top gainers..."
-          gainer_data=$(node build/cli/index.js top-gainers)
-          echo "--- START OF GAINER DATA ---"
+          gainer_data=$(node get-data.js gainers)
           echo "$gainer_data"
-          echo "--- END OF GAINER DATA ---"
-          if [[ -n "$gainer_data" ]]; then
-            curl -X POST -H "Content-Type: application/json" -d "$gainer_data" ${{ secrets.NPOINT_GAINERS_URL }}
-          else
-            echo "Scraper returned no data for gainers. Skipping post."
-          fi
+          curl -X POST -H "Content-Type: application/json" -d "$gainer_data" ${{ secrets.NPOINT_GAINERS_URL }}
 
       - name: Scrape Losers and POST to npoint
         run: |
-          echo "Attempting to scrape top losers..."
-          loser_data=$(node build/cli/index.js top-losers)
-          echo "--- START OF LOSER DATA ---"
+          loser_data=$(node get-data.js losers)
           echo "$loser_data"
-          echo "--- END OF LOSER DATA ---"
-          if [[ -n "$loser_data" ]]; then
-            curl -X POST -H "Content-Type: application/json" -d "$loser_data" ${{ secrets.NPOINT_LOSERS_URL }}
-          else
-            echo "Scraper returned no data for losers. Skipping post."
-          fi
+          curl -X POST -H "Content-Type: application/json" -d "$loser_data" ${{ secrets.NPOINT_LOSERS_URL }}
