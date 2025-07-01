@@ -1,24 +1,31 @@
 name: Scrape And Forward NSE Data
+
 on:
   schedule:
+    # Runs every 30 minutes
     - cron: '*/30 * * * *'
   workflow_dispatch:
+
 jobs:
   scrape-and-post:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
+
       - name: Install Dependencies
         run: pip install -r requirements.txt
+
       - name: Scrape Gainers and POST to npoint
         run: |
           gainer_data=$(python3 stock_nse_india.py top_gainers)
           curl -X POST -H "Content-Type: application/json" -d "$gainer_data" ${{ secrets.NPOINT_GAINERS_URL }}
+
       - name: Scrape Losers and POST to npoint
         run: |
           loser_data=$(python3 stock_nse_india.py top_losers)
