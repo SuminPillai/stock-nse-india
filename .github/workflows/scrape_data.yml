@@ -1,4 +1,4 @@
-name: Scrape NSE Data with Node.js
+name: Scrape and Post NSE Data
 
 on:
   schedule:
@@ -23,14 +23,8 @@ jobs:
       - name: Build the Project
         run: npm run build
 
-      - name: Scrape Gainers and POST to npoint
-        run: |
-          gainer_data=$(node get-data.js gainers)
-          echo "$gainer_data"
-          curl -X POST -H "Content-Type: application/json" -d "$gainer_data" ${{ secrets.NPOINT_GAINERS_URL }}
+      - name: Scrape and Post Gainers
+        run: node build/get-data.js gainers ${{ secrets.NPOINT_GAINERS_URL }}
 
-      - name: Scrape Losers and POST to npoint
-        run: |
-          loser_data=$(node get-data.js losers)
-          echo "$loser_data"
-          curl -X POST -H "Content-Type: application/json" -d "$loser_data" ${{ secrets.NPOINT_LOSERS_URL }}
+      - name: Scrape and Post Losers
+        run: node build/get-data.js losers ${{ secrets.NPOINT_LOSERS_URL }}

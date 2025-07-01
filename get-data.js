@@ -1,50 +1,46 @@
 const { NseIndia } = require('./build/index');
+const axios = require('axios'); // We now use axios to send data
 const nse = new NseIndia();
 
+// Get arguments from the command line
 const dataType = process.argv[2]; // 'gainers' or 'losers'
-const stocksToSample = 75; // Number of stocks to check for performance
+const npointUrl = process.argv[3]; // The secret URL for npoint.io
 
-async function findMarketMovers() {
-  try {
-    // 1. Get all available stock symbols from NSE
-    const allSymbols = await nse.getAllStockSymbols();
-
-    // 2. Take a random sample to avoid checking thousands of stocks on every run
-    const sampledSymbols = allSymbols
-      .map(value => ({ value, sort: Math.random() }))
-      .sort((a, b) => a.sort - b.sort)
-      .map(({ value }) => value)
-      .slice(0, stocksToSample);
-
-    // 3. Fetch details for each stock in our sample
-    const detailPromises = sampledSymbols.map(symbol => nse.getEquityDetails(symbol));
-    const allDetails = await Promise.all(detailPromises);
-
-    // 4. Filter for valid results and get the price info
-    const validStocks = allDetails
-      .filter(stock => stock && stock.priceInfo)
-      .map(stock => stock.priceInfo);
-
-    // 5. Sort all fetched stocks by their percentage change
-    validStocks.sort((a, b) => b.pChange - a.pChange);
-
-    let outputData = [];
-    if (dataType === 'gainers') {
-      // The top 10 are the biggest gainers
-      outputData = validStocks.slice(0, 10);
-    } else if (dataType === 'losers') {
-      // The bottom 10 are the biggest losers
-      outputData = validStocks.slice(-10).reverse(); // Get the last 10 and reverse the order
-    }
-
-    // 6. Print the final JSON data
-    console.log(JSON.stringify(outputData, null, 2));
-
-  } catch (error) {
-    console.error(`Error in findMarketMovers: ${error.message}`);
-    console.log("[]"); // Output an empty array on error
+// Check if the URL was provided
+if (!npointUrl || !npointUrl.startsWith('https://api.npoint.io/')) {
+    console.error("Error: A valid npoint.io URL was not provided as an argument.");
     process.exit(1);
-  }
 }
 
-findMarketMovers();
+async function scrapeAndPost() {
+    console.log(`Starting process for: ${dataType}`);
+    try {
+        // Step 1: Fetch the data using the documented function
+        const data = await nse.getGainersAndLosersByIndex("NIFTY 50");
+        let outputData = [];
+
+        if (dataType === 'gainers' && data.gainers) {
+            outputData = data.gainers;
+        } else if (dataType === 'losers' && data.losers) {
+            outputData = data.losers;
+        }
+
+        if (outputData.length > 0) {
+            console.log(`Successfully scraped ${outputData.length} ${dataType}.`);
+            
+            // Step 2: Send the data directly to npoint.io using axios
+            console.log(`Posting data to ${npointUrl}...`);
+            await axios.post(npointUrl, outputData, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            console.log("Successfully posted data to npoint.io!");
+        } else {
+            console.log(`No ${dataType} data was found to post.`);
+        }
+    } catch (error) {
+        console.error(`An error occurred: ${error.message}`);
+        process.exit(1);
+    }
+}
+
+scrapeAndPost();
